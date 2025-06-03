@@ -1,0 +1,36 @@
+# Terraform state files
+*.tfstate
+*.tfstate.backup
+
+# Terraform crash logs
+crash.log
+
+# Terraform variable overrides
+*.tfvars
+*.tfvars.json
+
+# Local .terraform directories
+.terraform/
+
+# Ignore Terraform plan output
+terraform.tfplan
+
+# IDE/editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python if you're running ML models or automation locally
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.venv/
+
+# System files
+.DS_Store
+Thumbs.db
+
