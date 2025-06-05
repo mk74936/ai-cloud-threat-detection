@@ -1,0 +1,50 @@
+{
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowDefinition.json#",
+      "actions": {
+        "Post_to_Teams": {
+          "inputs": {
+            "host": {
+              "connection": {
+                "name": "@parameters('$connections')['teams']['connectionId']"
+              }
+            },
+            "method": "post",
+            "path": "/v3/conversations",
+            "body": {
+              "text": "🚨 Azure Sentinel Alert: Login failure detected. Please investigate immediately."
+            }
+          },
+          "runAfter": {},
+          "type": "ApiConnection"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Http",
+          "inputs": {
+            "schema": {
+              "properties": {
+                "EventName": { "type": "string" },
+                "Account": { "type": "string" }
+              },
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "$connections": {
+        "value": {
+          "teams": {
+            "connectionId": "/subscriptions/xxxxxxxx/resourceGroups/logicapp-rg/providers/Microsoft.Web/connections/teams",
+            "connectionName": "teams",
+            "id": "/subscriptions/xxxxxxxx/providers/Microsoft.Web/locations/eastus/managedApis/teams"
+          }
+        }
+      }
+    }
+  }
+  

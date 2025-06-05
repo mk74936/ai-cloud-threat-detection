@@ -1,37 +1,113 @@
-name: Terraform Deployment
+name: Security Analytics CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-west-2
 
 jobs:
-  terraform:
-    name: 'Terraform Apply'
+  terraform-azure:
+    name: "Terraform Azure Infra"
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: terraform/azure
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        run: terraform init
-        working-directory: ./terraform
-
-      - name: Terraform Plan
-        run: terraform plan
-        working-directory: ./terraform
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-        working-directory: ./terraform
+      - name: Terraform Init & Apply
+        run: |
+          terraform init
+          terraform apply -auto-approve
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY }}
+
+  terraform-aws:
+    name: "Terraform AWS Infra"
+    runs-on: ubuntu-latest
+    needs: terraform-azure
+    defaults:
+      run:
+        working-directory: terraform/aws
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init & Apply
+        run: |
+          terraform init
+          terraform apply -auto-approve
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  push-sample-logs:
+    name: "Push Sample Logs"
+    runs-on: ubuntu-latest
+    needs: terraform-aws
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Push to Azure Log Analytics
+        run: |
+          pip install requests
+          python pipelines/log_ingestion/send_to_azure.py
+        env:
+          WORKSPACE_ID: ${{ secrets.WORKSPACE_ID }}
+          SHARED_KEY: ${{ secrets.SHARED_KEY }}
+
+      - name: Push to AWS S3
+        run: |
+          pip install boto3
+          python pipelines/log_ingestion/send_to_s3.py
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  test-ml:
+    name: "Test ML Anomaly Notebook"
+    runs-on: ubuntu-latest
+    needs: push-sample-logs
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Convert Notebook to Script
+        run: |
+          pip install notebook
+          jupyter nbconvert --to script ml/anomaly_detection.ipynb
+
+      - name: Run ML Anomaly Script
+        run: |
+          pip install pandas scikit-learn matplotlib
+          python ml/anomaly_detection.py
+
+  notify-and-ticket:
+    name: "Test Notification & Ticketing"
+    runs-on: ubuntu-latest
+    needs: test-ml
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: SNS Notification
+        run: |
+          pip install boto3
+          python pipelines/notifications/aws_sns_notifier.py
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: GitHub Ticket Creation
+        run: |
+          pip install requests
+          python pipelines/notifications/mock_github_ticket_creator.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

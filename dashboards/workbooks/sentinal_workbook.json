@@ -1,0 +1,28 @@
+{
+    "name": "Security Alert Overview",
+    "type": "workbook",
+    "version": "1.0",
+    "items": [
+      {
+        "type": "textblock",
+        "settings": {
+          "content": "### 🚨 Security Threat Dashboard\nMonitor failed logins and unusual IPs"
+        }
+      },
+      {
+        "type": "query",
+        "settings": {
+          "query": "SecurityEvent | where EventID == 4625 | summarize count() by bin(TimeGenerated, 1h)",
+          "title": "Failed Logins Over Time"
+        }
+      },
+      {
+        "type": "query",
+        "settings": {
+          "query": "SecurityEvent | summarize Count = count() by Account",
+          "title": "Alerts by User Account"
+        }
+      }
+    ]
+  }
+  

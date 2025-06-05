@@ -1,0 +1,34 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Security Analytics Overview",
+    "timezone": "browser",
+    "panels": [
+      {
+        "type": "graph",
+        "title": "Failed Logins (Azure)",
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "count_over_time({job=\"azure_logs\", EventName=\"4625\"}[1h])"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+      },
+      {
+        "type": "table",
+        "title": "Top Suspicious IPs (AWS)",
+        "targets": [
+          {
+            "refId": "B",
+            "expr": "topk(5, count_over_time({job=\"aws_logs\"}[1h]))"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 }
+      }
+    ],
+    "schemaVersion": 27,
+    "version": 1
+  },
+  "overwrite": false
+}

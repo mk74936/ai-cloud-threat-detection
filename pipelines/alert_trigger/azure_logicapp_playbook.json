@@ -1,0 +1,51 @@
+{
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowDefinition.json#",
+      "actions": {
+        "Send_Message": {
+          "inputs": {
+            "body": {
+              "text": "🚨 Alert: Suspicious login attempt detected in Azure logs."
+            },
+            "host": {
+              "connection": {
+                "name": "@parameters('$connections')['teams']['connectionId']"
+              }
+            },
+            "method": "post",
+            "path": "/v3/conversations"
+          },
+          "runAfter": {},
+          "type": "ApiConnection"
+        }
+      },
+      "triggers": {
+        "Http_Request": {
+          "inputs": {
+            "schema": {
+              "properties": {
+                "EventName": { "type": "string" },
+                "Account": { "type": "string" }
+              },
+              "type": "object"
+            }
+          },
+          "kind": "Http",
+          "type": "Request"
+        }
+      },
+      "outputs": {}
+    },
+    "parameters": {
+      "$connections": {
+        "value": {
+          "teams": {
+            "connectionId": "/subscriptions/xxxxxxxx/resourceGroups/logicapp-rg/providers/Microsoft.Web/connections/teams",
+            "connectionName": "teams",
+            "id": "/subscriptions/xxxxxxxx/providers/Microsoft.Web/locations/eastus/managedApis/teams"
+          }
+        }
+      }
+    }
+  }
+  
