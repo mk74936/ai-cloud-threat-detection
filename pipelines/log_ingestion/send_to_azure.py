@@ -1,5 +1,6 @@
 import json
 import requests
+from email.utils import formatdate
 
 # Azure Log Analytics Workspace Info (replace with your actual values)
 WORKSPACE_ID = "YOUR_WORKSPACE_ID"
@@ -20,7 +21,7 @@ def post_data(file_path):
         body = f.read()
     uri = f"https://{WORKSPACE_ID}.ods.opinsights.azure.com/api/logs?api-version=2016-04-01"
     content_type = "application/json"
-    rfc1123date = requests.utils.formatdate(timeval=None, localtime=False, usegmt=True)
+    rfc1123date = formatdate(timeval=None, localtime=False, usegmt=True)
     resource = "/api/logs"
     method = "POST"
     content_length = len(body)
@@ -36,4 +37,7 @@ def post_data(file_path):
     print(response.text)
 
 if __name__ == "__main__":
-    post_data("../../logs/azure_sample.json")
+    import os
+    current_dir = os.path.dirname(__file__)
+    log_path = os.path.join(current_dir, "..", "..", "logs", "azure_test.json")
+    post_data(log_path)
