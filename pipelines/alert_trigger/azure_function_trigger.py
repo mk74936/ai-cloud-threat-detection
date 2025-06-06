@@ -7,7 +7,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         log = req.get_json()
         logging.info(f"Received log: {log}")
 
-        if log.get("EventName") == "4625":
+        # Windows security logs use 'EventID' for the numeric code
+        if str(log.get("EventID")) == "4625":
             return func.HttpResponse(json.dumps({
                 "alert": True,
                 "reason": "Failed login detected"
