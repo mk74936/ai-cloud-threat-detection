@@ -1,5 +1,5 @@
 import boto3
-import json
+import os
 
 def upload_to_s3(bucket_name, file_path, s3_key):
     s3 = boto3.client("s3")
@@ -8,4 +8,6 @@ def upload_to_s3(bucket_name, file_path, s3_key):
     print(f"Uploaded {file_path} to s3://{bucket_name}/{s3_key}")
 
 if __name__ == "__main__":
-    upload_to_s3("security-lake-lab-logs", "../../logs/aws_sample.json", "logs/aws_sample.json")
+    current_dir = os.path.dirname(__file__)
+    log_path = os.path.join(current_dir, "..", "..", "logs", "aws_test.json")
+    upload_to_s3("security-lake-lab-logs", log_path, "logs/aws_test.json")
