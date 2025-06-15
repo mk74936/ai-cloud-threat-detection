@@ -1,3 +1,3 @@
 variable "location" {
-  default = "East US"
+  default = "Easts US"
 }
